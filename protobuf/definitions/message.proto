@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package messages;
+
+option go_package = "wwpb/protobuf/gen/messages;messages";
+
+import "google/protobuf/timestamp.proto";
+
+message TestMessage {    
+    string id = 1;
+    string message = 2;
+    google.protobuf.Timestamp created_at = 3;
+}
