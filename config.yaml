@@ -24,10 +24,10 @@ prometheus:
 
 repository:
   hosts: "localhost:5432"
-  dbname: "orders_db"
+  dbname: "flights_db"
   user: "postgres"
   password: "postgres"
-  schema: ""
+  schema: "flight"
   max_idle_conn: 5
   max_open_conn: 10
   max_idle_lifetime: 5m

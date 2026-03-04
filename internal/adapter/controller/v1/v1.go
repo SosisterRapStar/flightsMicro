@@ -1,5 +1,6 @@
 package v1
 
 type Controller struct {
-	Dummy DummyController
+	Flight FlightController
+	Dummy  DummyController
 }

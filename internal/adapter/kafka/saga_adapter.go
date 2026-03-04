@@ -1,0 +1,190 @@
+package kafka
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"sync"
+
+	"github.com/IBM/sarama"
+
+	"github.com/SosisterRapStar/LETI-paper/message"
+)
+
+// Config настройки Kafka для Saga Pubsub.
+type Config struct {
+	Brokers []string
+	GroupID string
+}
+
+// SagaPubsub реализует broker.Publisher и broker.Subscriber для LETI-paper saga.
+// Сериализует message.Message в JSON и использует Kafka consumer group.
+type SagaPubsub struct {
+	producer      sarama.SyncProducer
+	consumerGroup sarama.ConsumerGroup
+
+	mu       sync.RWMutex
+	closed   bool
+	handlers map[string]func(context.Context, message.Message) error
+
+	consumerWg sync.WaitGroup
+}
+
+// NewSagaPubsub создаёт Kafka-адаптер для saga.
+func NewSagaPubsub(cfg Config) (*SagaPubsub, error) {
+	if len(cfg.Brokers) == 0 {
+		return nil, fmt.Errorf("brokers are required")
+	}
+	if cfg.GroupID == "" {
+		cfg.GroupID = "leti-paper-saga"
+	}
+
+	config := sarama.NewConfig()
+	config.Producer.Return.Successes = true
+	config.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{
+		sarama.NewBalanceStrategyRoundRobin(),
+	}
+
+	producer, err := sarama.NewSyncProducer(cfg.Brokers, config)
+	if err != nil {
+		return nil, fmt.Errorf("kafka sync producer: %w", err)
+	}
+
+	consumerGroup, err := sarama.NewConsumerGroup(cfg.Brokers, cfg.GroupID, config)
+	if err != nil {
+		_ = producer.Close()
+		return nil, fmt.Errorf("kafka consumer group: %w", err)
+	}
+
+	return &SagaPubsub{
+		producer:      producer,
+		consumerGroup: consumerGroup,
+		handlers:      make(map[string]func(context.Context, message.Message) error),
+	}, nil
+}
+
+// Publish реализует broker.Publisher. Сериализует message.Message в JSON и отправляет в топик.
+func (s *SagaPubsub) Publish(ctx context.Context, topic string, msg message.Message) error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.closed {
+		return fmt.Errorf("saga pubsub is closed")
+	}
+
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("marshal message: %w", err)
+	}
+
+	_, _, err = s.producer.SendMessage(&sarama.ProducerMessage{
+		Topic: topic,
+		Value: sarama.ByteEncoder(data),
+	})
+	if err != nil {
+		return fmt.Errorf("kafka send: %w", err)
+	}
+	return nil
+}
+
+// Subscribe реализует broker.Subsciber.
+// Регистрирует handler для указанного топика; для старта потребления нужно вызвать Run.
+func (s *SagaPubsub) Subscribe(ctx context.Context, topic string, handler func(context.Context, message.Message) error) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return fmt.Errorf("saga pubsub is closed")
+	}
+	if _, exists := s.handlers[topic]; exists {
+		return fmt.Errorf("already subscribed to topic: %s", topic)
+	}
+	s.handlers[topic] = handler
+	return nil
+}
+
+// Run запускает consumer group и обрабатывает сообщения для всех подписанных топиков.
+// Обычно вызывается один раз на всё приложение в отдельной горутине.
+func (s *SagaPubsub) Run(ctx context.Context) error {
+	s.mu.RLock()
+	topics := make([]string, 0, len(s.handlers))
+	for t := range s.handlers {
+		topics = append(topics, t)
+	}
+	s.mu.RUnlock()
+
+	if len(topics) == 0 {
+		return nil
+	}
+
+	consumer := &consumerAdapter{
+		handlers: s.handlers,
+		mu:       &s.mu,
+	}
+
+	s.consumerWg.Add(1)
+	go func() {
+		defer s.consumerWg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if err := s.consumerGroup.Consume(ctx, topics, consumer); err != nil {
+					return
+				}
+			}
+		}
+	}()
+
+	return nil
+}
+
+// Close завершает работу consumer-group и закрывает producer.
+func (s *SagaPubsub) Close() error {
+	s.mu.Lock()
+	if s.closed {
+		s.mu.Unlock()
+		return nil
+	}
+	s.closed = true
+	s.mu.Unlock()
+
+	s.consumerWg.Wait()
+	_ = s.consumerGroup.Close()
+	return s.producer.Close()
+}
+
+// consumerAdapter адаптирует сообщения Kafka к message.Message из LETI-paper.
+type consumerAdapter struct {
+	handlers map[string]func(context.Context, message.Message) error
+	mu       *sync.RWMutex
+}
+
+var _ sarama.ConsumerGroupHandler = (*consumerAdapter)(nil)
+
+func (c *consumerAdapter) Setup(sarama.ConsumerGroupSession) error   { return nil }
+func (c *consumerAdapter) Cleanup(sarama.ConsumerGroupSession) error { return nil }
+
+func (c *consumerAdapter) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	for msg := range claim.Messages() {
+		c.mu.RLock()
+		handler, ok := c.handlers[msg.Topic]
+		c.mu.RUnlock()
+		if !ok {
+			session.MarkMessage(msg, "")
+			continue
+		}
+
+		var m message.Message
+		if err := json.Unmarshal(msg.Value, &m); err != nil {
+			session.MarkMessage(msg, "")
+			continue
+		}
+
+		if err := handler(context.Background(), m); err != nil {
+			continue
+		}
+
+		session.MarkMessage(msg, "")
+	}
+	return nil
+}

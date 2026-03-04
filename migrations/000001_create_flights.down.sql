@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS flight.flights;
+DROP SCHEMA IF EXISTS flight;

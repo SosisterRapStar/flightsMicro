@@ -18,6 +18,14 @@ func NewMux(cfg *config.AppConfig, c *controller.Controller) chi.Router {
 		r.Use(c.Middleware.Logger)
 		r.Use(c.Middleware.Monitoring)
 
+		r.Route("/flights", func(r chi.Router) {
+			r.Post("/", c.V1.Flight.Create)
+			r.Get("/", c.V1.Flight.List)
+			r.Get("/{id}", c.V1.Flight.GetByID)
+			r.Patch("/{id}", c.V1.Flight.Update)
+			r.Delete("/{id}", c.V1.Flight.Delete)
+		})
+
 		r.Get("/dummy", c.V1.Dummy.GetDummy)
 	})
 	return r

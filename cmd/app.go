@@ -10,6 +10,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver for database/sql
+
 	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/app"
 	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/config"
 	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/infrastructure/router"
@@ -18,22 +20,16 @@ import (
 const shutdownTimeout = 10 * time.Second
 
 func main() {
-	cfg := &config.AppConfig{
-		Server: config.Server{
-			Address: ":8080",
-		},
-		API: config.API{
-			Timeout:           30 * time.Second,
-			ReadHeaderTimeout: 5 * time.Second,
-		},
-	}
-
+	cfg := config.MustLoad("config.yaml")
 	runServer(cfg)
 }
 
 func runServer(cfg *config.AppConfig) {
 	a := app.New()
-	controllers := a.GetControllers(cfg)
+	controllers, err := a.GetControllers(cfg)
+	if err != nil {
+		log.Fatalf("building controllers: %v", err)
+	}
 	mux := router.NewMux(cfg, controllers)
 
 	srv := &http.Server{
