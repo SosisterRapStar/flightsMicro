@@ -12,9 +12,9 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver for database/sql
 
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/app"
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/config"
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/infrastructure/router"
+	"github.com/SosisterRapStar/flights/internal/app"
+	"github.com/SosisterRapStar/flights/internal/config"
+	"github.com/SosisterRapStar/flights/internal/infrastructure/router"
 )
 
 const shutdownTimeout = 10 * time.Second

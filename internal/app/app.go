@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/adapter/controller"
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/adapter/controller/middleware"
-	v1 "github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/adapter/controller/v1"
-	adapterKafka "github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/adapter/kafka"
-	adapterRepo "github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/adapter/repository"
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/config"
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/domain/flight"
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/infrastructure/db"
+	"github.com/SosisterRapStar/flights/internal/adapter/controller"
+	"github.com/SosisterRapStar/flights/internal/adapter/controller/middleware"
+	v1 "github.com/SosisterRapStar/flights/internal/adapter/controller/v1"
+	adapterKafka "github.com/SosisterRapStar/flights/internal/adapter/kafka"
+	adapterRepo "github.com/SosisterRapStar/flights/internal/adapter/repository"
+	"github.com/SosisterRapStar/flights/internal/config"
+	"github.com/SosisterRapStar/flights/internal/domain/flight"
+	"github.com/SosisterRapStar/flights/internal/infrastructure/db"
+	infrakafka "github.com/SosisterRapStar/flights/internal/infrastructure/kafka"
 )
 
 type App struct{}
@@ -30,15 +31,21 @@ func (a *App) GetControllers(cfg *config.AppConfig) (*controller.Controller, err
 	flightRepository := adapterRepo.NewFlightRepository(postgres, manager)
 	flightModule := flight.NewModule(flightRepository)
 
-	kafkaBrokers := cfg.Kafka.Brokers
-	if len(kafkaBrokers) == 0 && cfg.Kafka.URL != "" {
-		kafkaBrokers = strings.Split(cfg.Kafka.URL, ",")
+	brokers := cfg.Kafka.Brokers
+	if len(brokers) == 0 && cfg.Kafka.URL != "" {
+		brokers = strings.Split(cfg.Kafka.URL, ",")
 	}
 
-	sagaPubsub, err := adapterKafka.NewSagaPubsub(adapterKafka.Config{
-		Brokers: kafkaBrokers,
-		GroupID: cfg.Kafka.GroupID,
-	})
+	kafkaCfg := &infrakafka.Config{
+		Brokers:          brokers,
+		GroupID:          cfg.Kafka.GroupID,
+		AckPolicy:        cfg.Kafka.Producer.AckPolicy,
+		RetryMax:         cfg.Kafka.Producer.RetryMax,
+		AutoCommitEnable: cfg.Kafka.Consumer.AutoCommitEnable,
+		MaxWaitTime:      cfg.Kafka.Consumer.MaxWaitTime,
+	}
+
+	sagaPubsub, err := adapterKafka.NewSagaPubsub(kafkaCfg)
 	if err != nil {
 		return nil, fmt.Errorf("create saga pubsub: %w", err)
 	}

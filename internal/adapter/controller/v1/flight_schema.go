@@ -1,6 +1,6 @@
 package v1
 
-import "github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/domain/flight"
+import "github.com/SosisterRapStar/flights/internal/domain/flight"
 
 type createFlightRequest struct {
 	Origin      string `json:"origin"`

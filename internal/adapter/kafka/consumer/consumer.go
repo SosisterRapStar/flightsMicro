@@ -8,7 +8,7 @@ import (
 
 	"github.com/IBM/sarama"
 
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/domain/ports"
+	"github.com/SosisterRapStar/flights/internal/domain/ports"
 )
 
 // Consumer реализует ports.BrokerConsumer поверх sarama.ConsumerGroup.

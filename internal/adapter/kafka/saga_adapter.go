@@ -9,16 +9,10 @@ import (
 	"github.com/IBM/sarama"
 
 	"github.com/SosisterRapStar/LETI-paper/message"
+
+	infrakafka "github.com/SosisterRapStar/flights/internal/infrastructure/kafka"
 )
 
-// Config настройки Kafka для Saga Pubsub.
-type Config struct {
-	Brokers []string
-	GroupID string
-}
-
-// SagaPubsub реализует broker.Publisher и broker.Subscriber для LETI-paper saga.
-// Сериализует message.Message в JSON и использует Kafka consumer group.
 type SagaPubsub struct {
 	producer      sarama.SyncProducer
 	consumerGroup sarama.ConsumerGroup
@@ -30,27 +24,28 @@ type SagaPubsub struct {
 	consumerWg sync.WaitGroup
 }
 
-// NewSagaPubsub создаёт Kafka-адаптер для saga.
-func NewSagaPubsub(cfg Config) (*SagaPubsub, error) {
-	if len(cfg.Brokers) == 0 {
-		return nil, fmt.Errorf("brokers are required")
+func NewSagaPubsub(cfg *infrakafka.Config) (*SagaPubsub, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("kafka config is required")
 	}
+	useCfg := cfg
 	if cfg.GroupID == "" {
-		cfg.GroupID = "leti-paper-saga"
+		useCfg = &infrakafka.Config{
+			Brokers:          cfg.Brokers,
+			GroupID:          "leti-paper-saga",
+			AckPolicy:        cfg.AckPolicy,
+			RetryMax:         cfg.RetryMax,
+			AutoCommitEnable: cfg.AutoCommitEnable,
+			MaxWaitTime:      cfg.MaxWaitTime,
+		}
 	}
 
-	config := sarama.NewConfig()
-	config.Producer.Return.Successes = true
-	config.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{
-		sarama.NewBalanceStrategyRoundRobin(),
-	}
-
-	producer, err := sarama.NewSyncProducer(cfg.Brokers, config)
+	producer, err := infrakafka.NewSyncProducer(useCfg)
 	if err != nil {
 		return nil, fmt.Errorf("kafka sync producer: %w", err)
 	}
 
-	consumerGroup, err := sarama.NewConsumerGroup(cfg.Brokers, cfg.GroupID, config)
+	consumerGroup, err := infrakafka.NewConsumerGroup(useCfg)
 	if err != nil {
 		_ = producer.Close()
 		return nil, fmt.Errorf("kafka consumer group: %w", err)

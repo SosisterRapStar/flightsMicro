@@ -1,4 +1,4 @@
-module github.com/SosisterRapStar/LETI-PaperTestMicroservices
+module github.com/SosisterRapStar/flights
 
 go 1.25.4
 

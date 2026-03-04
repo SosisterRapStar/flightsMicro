@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/domain/flight"
+	"github.com/SosisterRapStar/flights/internal/domain/flight"
 	"github.com/go-chi/chi/v5"
 )
 

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/config"
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/pkg/transport"
+	"github.com/SosisterRapStar/flights/internal/config"
+	"github.com/SosisterRapStar/flights/pkg/transport"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

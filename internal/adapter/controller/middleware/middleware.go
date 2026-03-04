@@ -6,7 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/SosisterRapStar/LETI-PaperTestMicroservices/internal/config"
+	"github.com/SosisterRapStar/flights/internal/config"
 )
 
 type MiddlewareFunc func(http.Handler) http.Handler
