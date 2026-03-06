@@ -10,7 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver for database/sql
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/SosisterRapStar/flights/internal/app"
 	"github.com/SosisterRapStar/flights/internal/config"
@@ -25,12 +25,11 @@ func main() {
 }
 
 func runServer(cfg *config.AppConfig) {
-	a := app.New()
-	controllers, err := a.GetControllers(cfg)
+	a, err := app.New(cfg)
 	if err != nil {
-		log.Fatalf("building controllers: %v", err)
+		log.Fatalf("building app: %v", err)
 	}
-	mux := router.NewMux(cfg, controllers)
+	mux := router.NewMux(cfg, a.Controller)
 
 	srv := &http.Server{
 		Addr:              cfg.Server.Address,

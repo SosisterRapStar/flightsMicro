@@ -11,15 +11,11 @@ import (
 )
 
 type FlightRepository struct {
-	db      *sqlx.DB
-	manager *Manager
+	db *sqlx.DB
 }
 
-func NewFlightRepository(db *sqlx.DB, manager *Manager) *FlightRepository {
-	return &FlightRepository{
-		db:      db,
-		manager: manager,
-	}
+func NewFlightRepository(db *sqlx.DB) *FlightRepository {
+	return &FlightRepository{db: db}
 }
 
 func (r *FlightRepository) Create(ctx context.Context, input flight.CreateFlightInput) (*flight.Flight, error) {

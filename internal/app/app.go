@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -13,22 +14,20 @@ import (
 	"github.com/SosisterRapStar/flights/internal/domain/flight"
 	"github.com/SosisterRapStar/flights/internal/infrastructure/db"
 	infrakafka "github.com/SosisterRapStar/flights/internal/infrastructure/kafka"
+	"github.com/SosisterRapStar/flights/internal/saga"
 )
 
-type App struct{}
-
-func New() *App {
-	return &App{}
+type App struct {
+	Controller *controller.Controller
 }
 
-func (a *App) GetControllers(cfg *config.AppConfig) (*controller.Controller, error) {
+func New(cfg *config.AppConfig) (*App, error) {
 	postgres, err := db.NewPostgres(&cfg.Repository)
 	if err != nil {
 		return nil, fmt.Errorf("opening postgres connection: %w", err)
 	}
 
-	manager := adapterRepo.NewManager(postgres)
-	flightRepository := adapterRepo.NewFlightRepository(postgres, manager)
+	flightRepository := adapterRepo.NewFlightRepository(postgres)
 	flightModule := flight.NewModule(flightRepository)
 
 	brokers := cfg.Kafka.Brokers
@@ -50,13 +49,29 @@ func (a *App) GetControllers(cfg *config.AppConfig) (*controller.Controller, err
 		return nil, fmt.Errorf("create saga pubsub: %w", err)
 	}
 
-	_ = sagaPubsub
+	ctx := context.Background()
+	flightSaga, err := saga.InitFlightSaga(ctx, postgres.DB, sagaPubsub)
+	if err != nil {
+		return nil, fmt.Errorf("init flight saga: %w", err)
+	}
 
-	return &controller.Controller{
-		Middleware: middleware.NewMiddleware(cfg),
-		V1: v1.Controller{
-			Flight: v1.NewFlightController(flightModule),
-			Dummy:  v1.NewDummyController(),
+	if err := flightSaga.Controller.Register(saga.TopicBookingCreated, flightSaga.StepFlightReserve); err != nil {
+		return nil, fmt.Errorf("register %s step: %w", saga.TopicBookingCreated, err)
+	}
+
+	if err := flightSaga.Controller.Init(ctx); err != nil {
+		return nil, fmt.Errorf("init flight saga controller: %w", err)
+	}
+	if err := sagaPubsub.Run(ctx); err != nil {
+		return nil, fmt.Errorf("run saga pubsub: %w", err)
+	}
+	return &App{
+		Controller: &controller.Controller{
+			Middleware: middleware.NewMiddleware(cfg),
+			V1: v1.Controller{
+				Flight: v1.NewFlightController(flightModule),
+				Dummy:  v1.NewDummyController(),
+			},
 		},
 	}, nil
 }

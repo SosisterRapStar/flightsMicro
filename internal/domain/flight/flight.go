@@ -69,3 +69,23 @@ type ListParams struct {
 	Limit  int `json:"limit"`
 	Offset int `json:"offset"`
 }
+
+const (
+	FlightBookingStatusReserved  = "reserved"
+	FlightBookingStatusCancelled = "cancelled"
+)
+
+var (
+	ErrFlightBookingNotFound = errors.New("flight booking not found")
+	ErrNoSeatsAvailable      = errors.New("no seats available")
+)
+
+type FlightBooking struct {
+	ID         string    `db:"id" json:"id"`
+	UserID     string    `db:"user_id" json:"user_id"`
+	FlightID   string    `db:"flight_id" json:"flight_id"`
+	SeatNumber string    `db:"seat_number" json:"seat_number"`
+	Status     string    `db:"status" json:"status"`
+	CreatedAt  time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt  time.Time `db:"updated_at" json:"updated_at"`
+}
