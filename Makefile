@@ -13,15 +13,9 @@ migration-up:
 migration-down:
 	migrate -path migrations -database "$(MIGRATE_DSN)" down 1
 
-.PHONY: runp
-runp: 
-	go run ./cmd/producer/main.go
-
-.PHONY: runc
-runc: 
-	@echo ${KAFKA_TOPICS}
-	go run ./cmd/consumer/main.go
-
+.PHONY: run
+run:
+	go run ./cmd/app.go
 
 .PHONY: proto
 proto:
