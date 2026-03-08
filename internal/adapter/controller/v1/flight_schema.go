@@ -2,6 +2,7 @@ package v1
 
 import "github.com/SosisterRapStar/flights/internal/domain/flight"
 
+// createFlightRequest тело запроса для создания рейса
 type createFlightRequest struct {
 	Origin      string `json:"origin"`
 	Destination string `json:"destination"`
@@ -13,6 +14,7 @@ type createFlightRequest struct {
 	Status      string `json:"status"`
 }
 
+// updateFlightRequest тело запроса для обновления рейса (все поля опциональны)
 type updateFlightRequest struct {
 	Origin         *string `json:"origin,omitempty"`
 	Destination    *string `json:"destination,omitempty"`
@@ -25,10 +27,12 @@ type updateFlightRequest struct {
 	Status         *string `json:"status,omitempty"`
 }
 
+// errorResponse ответ с ошибкой
 type errorResponse struct {
 	Message string `json:"message"`
 }
 
+// listFlightsResponse ответ со списком рейсов
 type listFlightsResponse struct {
 	Items []flight.Flight `json:"items"`
 }

@@ -26,6 +26,16 @@ func NewFlightController(module flight.Module) *flightController {
 	return &flightController{module: module}
 }
 
+// Create создаёт новый рейс.
+// @Summary Create flight
+// @Description Создаёт новый рейс
+// @Tags flights
+// @Accept json
+// @Produce json
+// @Param request body createFlightRequest true "Flight data"
+// @Success 201 {object} flight.Flight
+// @Failure 400 {object} errorResponse
+// @Router /flights [post]
 func (c *flightController) Create(w http.ResponseWriter, r *http.Request) {
 	req := createFlightRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -64,6 +74,16 @@ func (c *flightController) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, created)
 }
 
+// GetByID возвращает рейс по ID.
+// @Summary Get flight by ID
+// @Description Возвращает рейс по указанному ID
+// @Tags flights
+// @Produce json
+// @Param id path string true "Flight ID (UUID)"
+// @Success 200 {object} flight.Flight
+// @Failure 404 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /flights/{id} [get]
 func (c *flightController) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -80,6 +100,16 @@ func (c *flightController) GetByID(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, item)
 }
 
+// List возвращает список рейсов с пагинацией.
+// @Summary List flights
+// @Description Возвращает список рейсов с пагинацией
+// @Tags flights
+// @Produce json
+// @Param limit query int false "Limit (default 20)" default(20)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} listFlightsResponse
+// @Failure 500 {object} errorResponse
+// @Router /flights [get]
 func (c *flightController) List(w http.ResponseWriter, r *http.Request) {
 	limit := parseIntQuery(r, "limit", 20)
 	offset := parseIntQuery(r, "offset", 0)
@@ -96,6 +126,18 @@ func (c *flightController) List(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, listFlightsResponse{Items: items})
 }
 
+// Update обновляет рейс.
+// @Summary Update flight
+// @Description Обновляет рейс по ID (частичное обновление)
+// @Tags flights
+// @Accept json
+// @Produce json
+// @Param id path string true "Flight ID (UUID)"
+// @Param request body updateFlightRequest true "Fields to update"
+// @Success 200 {object} flight.Flight
+// @Failure 400 {object} errorResponse
+// @Failure 404 {object} errorResponse
+// @Router /flights/{id} [patch]
 func (c *flightController) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -145,6 +187,15 @@ func (c *flightController) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, updated)
 }
 
+// Delete удаляет рейс.
+// @Summary Delete flight
+// @Description Удаляет рейс по ID
+// @Tags flights
+// @Param id path string true "Flight ID (UUID)"
+// @Success 204 "No Content"
+// @Failure 404 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /flights/{id} [delete]
 func (c *flightController) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 

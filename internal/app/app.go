@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	paperController "github.com/SosisterRapStar/LETI-paper/controller"
 	"github.com/SosisterRapStar/flights/internal/adapter/controller"
 	"github.com/SosisterRapStar/flights/internal/adapter/controller/middleware"
 	v1 "github.com/SosisterRapStar/flights/internal/adapter/controller/v1"
@@ -14,6 +15,7 @@ import (
 	"github.com/SosisterRapStar/flights/internal/domain/flight"
 	"github.com/SosisterRapStar/flights/internal/infrastructure/db"
 	infrakafka "github.com/SosisterRapStar/flights/internal/infrastructure/kafka"
+	"github.com/SosisterRapStar/flights/internal/infrastructure/telemetry"
 	"github.com/SosisterRapStar/flights/internal/saga"
 )
 
@@ -49,8 +51,19 @@ func New(cfg *config.AppConfig) (*App, error) {
 		return nil, fmt.Errorf("create saga pubsub: %w", err)
 	}
 
+	if err := telemetry.Init(cfg); err != nil {
+		return nil, fmt.Errorf("init telemetry: %w", err)
+	}
+
 	ctx := context.Background()
-	flightSaga, err := saga.InitFlightSaga(ctx, postgres.DB, sagaPubsub)
+	var sagaTracing *paperController.TracingConfig
+	if cfg.Tracing.Enabled {
+		sagaTracing = &paperController.TracingConfig{
+			Tracer:     telemetry.Tracer("flights-saga"),
+			TracerName: "flights",
+		}
+	}
+	flightSaga, err := saga.InitFlightSaga(ctx, postgres.DB, sagaPubsub, sagaTracing)
 	if err != nil {
 		return nil, fmt.Errorf("init flight saga: %w", err)
 	}

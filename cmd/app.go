@@ -14,11 +14,17 @@ import (
 
 	"github.com/SosisterRapStar/flights/internal/app"
 	"github.com/SosisterRapStar/flights/internal/config"
+	_ "github.com/SosisterRapStar/flights/internal/docs"
 	"github.com/SosisterRapStar/flights/internal/infrastructure/router"
+	"github.com/SosisterRapStar/flights/internal/infrastructure/telemetry"
 )
 
 const shutdownTimeout = 10 * time.Second
 
+// @title Flights API
+// @version 1.0
+// @description API для управления рейсами (flights microservice).
+// @BasePath /api/v1
 func main() {
 	cfg := config.MustLoad("config.yaml")
 	runServer(cfg)
@@ -59,6 +65,9 @@ func shutdown(srv *http.Server) {
 
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("server shutdown: %v", err)
+	}
+	if err := telemetry.Shutdown(ctx); err != nil {
+		log.Warnf("telemetry shutdown: %v", err)
 	}
 
 	log.Info("server stopped gracefully")

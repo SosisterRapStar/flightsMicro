@@ -32,3 +32,8 @@ repository:
   max_open_conn: 10
   max_idle_lifetime: 5m
   max_open_lifetime: 30m
+
+tracing:
+  endpoint: "http://localhost:4318"
+  service_name: "flights"
+  enabled: true

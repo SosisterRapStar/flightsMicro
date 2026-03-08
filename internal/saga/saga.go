@@ -51,6 +51,7 @@ func InitFlightSaga(
 	ctx context.Context,
 	db *sql.DB,
 	pubsub paperBroker.Pubsub,
+	tracing *controller.TracingConfig,
 ) (*FlightSaga, error) {
 	if db == nil {
 		return nil, fmt.Errorf("db is required")
@@ -81,6 +82,7 @@ func InitFlightSaga(
 		BackoffMin:    100 * time.Millisecond,
 		BackoffMax:    1 * time.Minute,
 		ErrCh:         errCh,
+		Tracing:       tracing,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create controller: %w", err)

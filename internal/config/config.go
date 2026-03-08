@@ -15,6 +15,13 @@ type AppConfig struct {
 	Kafka      Kafka      `yaml:"kafka"`
 	Prometheus Prometheus `yaml:"prometheus"`
 	Repository Repository `yaml:"repository"`
+	Tracing    Tracing    `yaml:"tracing"`
+}
+
+type Tracing struct {
+	Endpoint    string `yaml:"endpoint" env:"TRACING_EXPORTER_OTLP_ENDPOINT" env_default:"http://localhost:4318"`
+	ServiceName string `yaml:"service_name" env:"TRACING_SERVICE_NAME" env_default:"flights"`
+	Enabled     bool   `yaml:"enabled" env:"TRACING_ENABLED" env_default:"true"`
 }
 
 type Server struct {
