@@ -16,7 +16,9 @@ func NewMux(cfg *config.AppConfig, c *controller.Controller) chi.Router {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(c.Middleware.Logger)
-		r.Use(c.Middleware.Monitoring)
+		if c.Middleware.Monitoring != nil {
+			r.Use(c.Middleware.Monitoring)
+		}
 
 		r.Route("/flights", func(r chi.Router) {
 			r.Post("/", c.V1.Flight.Create)
