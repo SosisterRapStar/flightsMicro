@@ -13,6 +13,9 @@ migration-up:
 migration-down:
 	migrate -path migrations -database "$(MIGRATE_DSN)" down 1
 
+.PHONY: seed
+seed: migration-up
+
 .PHONY: run
 run:
 	go run ./cmd/app.go
