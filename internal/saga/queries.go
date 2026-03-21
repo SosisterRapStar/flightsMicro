@@ -4,7 +4,7 @@ const (
 	insertFlightBookingQuery = `
 INSERT INTO flight.flight_bookings (user_id, flight_id, status)
 VALUES ($1, $2, 'reserved')
-RETURNING id;
+RETURNING booking_id;
 `
 
 	decrementFlightSeatsQuery = `

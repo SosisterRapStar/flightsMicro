@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/IBM/sarama"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/SosisterRapStar/LETI-paper/message"
 
@@ -171,6 +172,17 @@ func (c *consumerAdapter) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 
 		var m message.Message
 		if err := json.Unmarshal(msg.Value, &m); err != nil {
+			preview := string(msg.Value)
+			if len(preview) > 500 {
+				preview = preview[:500] + "..."
+			}
+			log.WithError(err).WithFields(log.Fields{
+				"topic":         msg.Topic,
+				"partition":     msg.Partition,
+				"offset":        msg.Offset,
+				"value_len":     len(msg.Value),
+				"value_preview": preview,
+			}).Warn("failed to unmarshal saga message")
 			session.MarkMessage(msg, "")
 			continue
 		}
