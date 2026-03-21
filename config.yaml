@@ -23,7 +23,7 @@ prometheus:
   host: "localhost:2112"
 
 repository:
-  hosts: "localhost:5432"
+  hosts: "localhost:5435"
   dbname: "flights_db"
   user: "postgres"
   password: "postgres"
