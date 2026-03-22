@@ -2,11 +2,9 @@ module github.com/SosisterRapStar/flights
 
 go 1.25.4
 
-replace github.com/SosisterRapStar/cliros => ../LETI-paper
-
 require (
 	github.com/IBM/sarama v1.47.0
-	github.com/SosisterRapStar/cliros v0.0.0-00010101000000-000000000000
+	github.com/SosisterRapStar/cliros v1.0.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.8.0
