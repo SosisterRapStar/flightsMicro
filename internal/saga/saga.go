@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SosisterRapStar/LETI-paper/backoff"
-	paperBroker "github.com/SosisterRapStar/LETI-paper/broker"
-	"github.com/SosisterRapStar/LETI-paper/controller"
-	"github.com/SosisterRapStar/LETI-paper/database"
-	"github.com/SosisterRapStar/LETI-paper/message"
-	"github.com/SosisterRapStar/LETI-paper/retry"
-	"github.com/SosisterRapStar/LETI-paper/step"
+	"github.com/SosisterRapStar/cliros/backoff"
+	paperBroker "github.com/SosisterRapStar/cliros/broker"
+	"github.com/SosisterRapStar/cliros/controller"
+	"github.com/SosisterRapStar/cliros/database"
+	"github.com/SosisterRapStar/cliros/message"
+	"github.com/SosisterRapStar/cliros/retry"
+	"github.com/SosisterRapStar/cliros/step"
 )
 
 type flightPayload struct {

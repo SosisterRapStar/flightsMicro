@@ -10,7 +10,7 @@ import (
 
 	"github.com/IBM/sarama"
 
-	"github.com/SosisterRapStar/LETI-paper/message"
+	"github.com/SosisterRapStar/cliros/message"
 )
 
 // KafkaConfig настройки подключения к Kafka для адаптера LETI-paper.

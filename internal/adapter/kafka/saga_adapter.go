@@ -9,7 +9,7 @@ import (
 	"github.com/IBM/sarama"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/SosisterRapStar/LETI-paper/message"
+	"github.com/SosisterRapStar/cliros/message"
 
 	infrakafka "github.com/SosisterRapStar/flights/internal/infrastructure/kafka"
 )

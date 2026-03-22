@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	paperController "github.com/SosisterRapStar/LETI-paper/controller"
+	paperController "github.com/SosisterRapStar/cliros/controller"
 	"github.com/SosisterRapStar/flights/internal/adapter/controller"
 	"github.com/SosisterRapStar/flights/internal/adapter/controller/middleware"
 	v1 "github.com/SosisterRapStar/flights/internal/adapter/controller/v1"
